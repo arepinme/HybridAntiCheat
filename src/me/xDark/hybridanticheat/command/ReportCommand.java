@@ -1,7 +1,6 @@
 package me.xDark.hybridanticheat.command;
 
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -13,7 +12,6 @@ import me.xDark.hybridanticheat.utils.ParseUtil;
 
 public class ReportCommand implements CommandExecutor {
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public boolean onCommand(CommandSender s, Command cmd, String str, String[] args) {
 		if (s.equals(Bukkit.getConsoleSender()))
