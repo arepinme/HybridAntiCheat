@@ -17,12 +17,14 @@ public class SpeedHackCheck implements Check {
 	public void doCheck(User user, Event e) {
 		if (user.getHandle().hasPermission("hac.bypass.speedhack"))
 			return;
+		if (user.getHandle().getAllowFlight() && user.getHandle().isFlying())
+			return;
 		PlayerMoveEvent event = CastUtil.cast(e);
 		double xDifference = (Math.max(event.getFrom().getX(), event.getTo().getX())
 				- Math.min(event.getFrom().getX(), event.getTo().getX())),
 				zDifference = (Math.max(event.getFrom().getZ(), event.getTo().getZ())
 						- Math.min(event.getFrom().getZ(), event.getTo().getZ()));
-		if (user.getHandle().getGameMode() != GameMode.CREATIVE && (xDifference > 7D || zDifference > 7D))
+		if (user.getHandle().getGameMode() != GameMode.CREATIVE && (xDifference > 5D || zDifference > 5D))
 			Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.SpeedHack));
 	}
 

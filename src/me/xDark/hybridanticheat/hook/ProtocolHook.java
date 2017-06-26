@@ -1,6 +1,7 @@
 package me.xDark.hybridanticheat.hook;
 
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
@@ -28,6 +29,10 @@ public class ProtocolHook {
 
 	public static final HashMap<Player, Long> channelRegisterMap = new HashMap<>();
 
+	private static final HashMap<Player, Location> safetyLocations = new HashMap<>();
+
+	public static final HashMap<Player, AtomicInteger> teleportAttempts = new HashMap<>();
+
 	public static void hook() {
 		try {
 			ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(HybridAntiCheat.instance(),
@@ -44,16 +49,19 @@ public class ProtocolHook {
 					double xDiff = MathUtil.diff(x, p.getLocation().getX());
 					double yDiff = MathUtil.diff(y, p.getLocation().getY());
 					double zDiff = MathUtil.diff(z, p.getLocation().getZ());
-					if (xDiff > 10D || yDiff > 10D || zDiff > 10D) {
-						HybridAntiCheat.callSyncMethod(() -> {
+					if (p.getGameMode() == GameMode.CREATIVE)
+						return;
+					if (xDiff > 1D || yDiff > 1D || zDiff > 1D) {
+						if (teleportAttempts.get(p).incrementAndGet() == 5) {
+							p.teleport(safetyLocations.get(p));
 							User user;
 							Bukkit.getPluginManager()
 									.callEvent(new ValidateEvent(user = HybridAPI.getUser(p), CheckType.Teleport));
 							HybridAPI.disconnectUser(user, CheckType.Teleport);
-							return (Void) null;
 						}
-
-						);
+					} else {
+						teleportAttempts.get(p).set(0);
+						safetyLocations.put(p, p.getLocation());
 					}
 				}
 			});
@@ -72,10 +80,7 @@ public class ProtocolHook {
 						else {
 							if ((System.currentTimeMillis() - channelRegisterMap.get(p)) <= 50L) {
 								e.setCancelled(true);
-								HybridAntiCheat.callSyncMethod(() -> {
-									HybridAPI.disconnectUser(HybridAPI.getUser(p), CheckType.Exploits);
-									return (Void) null;
-								});
+								HybridAPI.disconnectUser(HybridAPI.getUser(p), CheckType.Exploits);
 							} else
 								channelRegisterMap.put(p, System.currentTimeMillis());
 						}
@@ -95,12 +100,8 @@ public class ProtocolHook {
 							if (user == null)
 								return;
 							user.incrementSentPackets();
-							if (user.isFlooding()) {
-								HybridAntiCheat.callSyncMethod(() -> {
-									HybridAPI.disconnectUser(HybridAPI.getUser(p), CheckType.Exploits);
-									return (Void) null;
-								});
-							}
+							if (user.isFlooding())
+								HybridAPI.disconnectUser(HybridAPI.getUser(p), CheckType.Exploits);
 						}
 					});
 			ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(HybridAntiCheat.instance(),
@@ -112,6 +113,8 @@ public class ProtocolHook {
 						return;
 					User user = HybridAPI.getUser(p);
 					if (user == null)
+						return;
+					if (HybridAPI.getBlockInfront(p, 10).getType() == Material.AIR)
 						return;
 					PacketContainer container = e.getPacket();
 					BlockPosition blockPos = container.getBlockPositionModifier().read(0);
@@ -134,12 +137,16 @@ public class ProtocolHook {
 					User user = HybridAPI.getUser(p);
 					if (user == null)
 						return;
+					if (p.getItemInHand() == null || p.getItemInHand().getType() == Material.AIR)
+						return;
+					if (HybridAPI.getBlockInfront(p, 10).getType() == Material.AIR)
+						return;
 					PacketContainer container = e.getPacket();
 					BlockPosition blockPos = container.getBlockPositionModifier().read(0);
 					Location blockLocation = new Location(p.getWorld(), blockPos.getX(), blockPos.getY(),
 							blockPos.getZ());
-					if ((p.getLocation().distance(blockLocation) > (p.getGameMode() == GameMode.CREATIVE ? 7D : 5.5D))
-							|| (blockLocation.getBlock().getType() == Material.AIR)) {
+					if ((p.getLocation()
+							.distance(blockLocation) > (p.getGameMode() == GameMode.CREATIVE ? 7D : 5.5D))) {
 						e.setCancelled(true);
 						Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.InvalidAction));
 					}

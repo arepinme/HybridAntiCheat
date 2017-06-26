@@ -9,6 +9,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerToggleFlightEvent;
 
 import me.xDark.hybridanticheat.AntiCheatSettings.CheckType;
 import me.xDark.hybridanticheat.HybridAntiCheat;
@@ -71,5 +72,12 @@ public class CheckListener implements Listener {
 	@EventHandler
 	public void onBedEnter(PlayerBedLeaveEvent e) {
 		HybridAPI.getUser(e.getPlayer()).setSleeping(false);
+	}
+
+	@EventHandler
+	public void onToggle(PlayerToggleFlightEvent e) {
+		User user = HybridAPI.getUser(e.getPlayer());
+		if (user != null)
+			user.updateSafeLocation(e.getPlayer().getLocation());
 	}
 }

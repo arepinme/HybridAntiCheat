@@ -29,8 +29,9 @@ public class FlightCheck implements Check {
 		Player p = user.getHandle();
 		if (p.hasPermission("hac.bypass.flight"))
 			return;
-		if (p.isOnGround()
-				|| p.getLocation().getBlock().getRelative(BlockFace.DOWN).getType() != Material.AIR)
+		if (p.getAllowFlight() && p.isFlying())
+			return;
+		if (p.isOnGround() || p.getLocation().getBlock().getRelative(BlockFace.DOWN).getType() != Material.AIR)
 			user.updateSafeLocation(p.getLocation());
 		if (p.isFlying() && !p.getAllowFlight()) {
 			p.setFlying(false);
@@ -69,12 +70,23 @@ public class FlightCheck implements Check {
 				return;
 			} else
 				floatingTime.get(p).set(0);
-
-		if (event.getTo().getY() > event.getFrom().getY()
-				&& p.getLocation().distance(user.getSafeLocation()) > 7D) {
+		if (p.getLocation().getBlock().getRelative(BlockFace.DOWN).getType() == Material.AIR
+				&& (event.getFrom().getBlockY() == event.getTo().getBlockY())) {
+			if (floatingTime.get(p).incrementAndGet() >= 60) {
+				p.setFlying(false);
+				p.setAllowFlight(false);
+				p.damage(1);
+				event.setTo(event.getFrom());
+				Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.Flight));
+				return;
+			}
+		} else
+			floatingTime.get(p).set(0);
+		if (event.getTo().getY() > event.getFrom().getY() && p.getLocation().distance(user.getSafeLocation()) > 7D) {
 			p.damage(p.getHealth() / 2);
 			event.setTo(user.getSafeLocation());
 			Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.Flight));
 		}
+
 	}
 }

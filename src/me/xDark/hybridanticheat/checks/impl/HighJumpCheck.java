@@ -24,6 +24,8 @@ public class HighJumpCheck implements Check {
 		if (user.isSleeping())
 			return;
 		Player p = user.getHandle();
+		if (p.getAllowFlight() && p.isFlying())
+			return;
 		if (p.hasPermission("hac.bypass.highjump"))
 			return;
 		PlayerMoveEvent moveEvent = CastUtil.cast(e);

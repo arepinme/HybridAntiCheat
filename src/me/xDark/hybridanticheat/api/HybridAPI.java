@@ -6,12 +6,15 @@ import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 import me.xDark.hybridanticheat.AntiCheatSettings.CheckType;
-import me.xDark.hybridanticheat.checks.impl.FlightCheck;
 import me.xDark.hybridanticheat.HybridAntiCheat;
+import me.xDark.hybridanticheat.checks.impl.FlightCheck;
 import me.xDark.hybridanticheat.hook.ProtocolHook;
 import me.xDark.hybridanticheat.utils.ClassUtil;
 import me.xDark.hybridanticheat.utils.ReflectionUtil;
@@ -52,11 +55,15 @@ public class HybridAPI {
 			user.gc();
 		});
 		users.clear();
+		FlightCheck.floatingTime.clear();
+		ProtocolHook.teleportAttempts.clear();
+		ProtocolHook.channelRegisterMap.clear();
 	}
 
 	public static void registerPlayer(Player player) {
 		users.put(player, new User(player));
 		FlightCheck.floatingTime.put(player, new AtomicInteger(0));
+		ProtocolHook.teleportAttempts.put(player, new AtomicInteger(0));
 	}
 
 	public static void unregisterPlayer(Player player) {
@@ -66,6 +73,8 @@ public class HybridAPI {
 		user.gc();
 		users.remove(player);
 		ProtocolHook.channelRegisterMap.remove(player);
+		FlightCheck.floatingTime.remove(player);
+		ProtocolHook.teleportAttempts.remove(player);
 	}
 
 	public static void disconnectUser(User user, CheckType checkType) {
@@ -73,10 +82,13 @@ public class HybridAPI {
 			return;
 		if (user.isVerbose())
 			return;
-		users.remove(user.getHandle());
-		user.getHandle().kickPlayer(HybridAntiCheat.getPrefix()
-				+ "\n§cYou has been kicked from the server!\n§fKicked for: §c" + checkType.name());
-		user.gc();
+		HybridAntiCheat.callSyncMethod(() -> {
+			user.getHandle().kickPlayer(HybridAntiCheat.getPrefix()
+					+ "\n§cYou has been kicked from the server!\n§fKicked for: §c" + checkType.name());
+			user.gc();
+			users.remove(user.getHandle());
+			return (Void) null;
+		});
 	}
 
 	public static User getUser(Object o) {
@@ -90,7 +102,16 @@ public class HybridAPI {
 
 	public static boolean isInvalidMaterial(Material type) {
 		return (type == Material.WATER || type == Material.STATIONARY_WATER || type == Material.LAVA
-				|| type == Material.STATIONARY_LAVA || type == Material.AIR);
+				|| type == Material.STATIONARY_LAVA);
+	}
+
+	public static Block getBlockInfront(Entity entity, float distance) {
+		double yaw = entity.getLocation().getYaw();
+		yaw = Math.toRadians(yaw);
+		double dX = -Math.sin(yaw) * distance;
+		double dZ = Math.cos(yaw) * distance;
+		return entity.getWorld().getBlockAt(new Location(entity.getWorld(), entity.getLocation().getX() + dX,
+				entity.getLocation().getY(), entity.getLocation().getZ() + dZ));
 	}
 
 	public static void clearVLs() {

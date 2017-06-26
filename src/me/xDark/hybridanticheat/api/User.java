@@ -94,7 +94,8 @@ public class User {
 	}
 
 	public boolean isSleeping() {
-		return ((boolean) values.get("sleeping"));
+
+		return values.get("sleeping") == null ? false : ((boolean) values.get("sleeping"));
 	}
 
 	public void setSleeping(boolean sleep) {
