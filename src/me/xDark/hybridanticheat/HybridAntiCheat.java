@@ -39,6 +39,9 @@ public class HybridAntiCheat extends JavaPlugin {
 			updateTaskId = getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
 				reload(null);
 			}, 1L, 20L * 60L * 5L);
+		getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
+			HybridAPI.clearVLs();
+		}, 1L, 20L * 15L);
 		ClassUtil.init();
 		HybridAPI.start();
 		getServer().getPluginManager().registerEvents(userListener, this);

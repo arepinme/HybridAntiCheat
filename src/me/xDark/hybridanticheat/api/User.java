@@ -3,6 +3,7 @@ package me.xDark.hybridanticheat.api;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import com.google.common.collect.Maps;
@@ -28,6 +29,8 @@ public class User {
 		values.put("lastReceivedUpdatePacket", System.currentTimeMillis());
 		values.put("vl", new AtomicInteger(0));
 		values.put("verbose", false);
+		values.put("safeLocation", handle.getLocation());
+		values.put("sleeping", false);
 	}
 
 	public void gc() {
@@ -79,6 +82,23 @@ public class User {
 
 	public void resetVL() {
 		((AtomicInteger) values.get("vl")).set(0);
+	}
+
+	public Location getSafeLocation() {
+		return ((Location) values.get("safeLocation"));
+	}
+
+	public void updateSafeLocation(Location safe) {
+		values.remove("safeLocation");
+		values.put("safeLocation", safe);
+	}
+
+	public boolean isSleeping() {
+		return ((boolean) values.get("sleeping"));
+	}
+
+	public void setSleeping(boolean sleep) {
+		values.put("sleeping", sleep);
 	}
 
 	public boolean isFlooding() {

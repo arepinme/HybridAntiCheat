@@ -1,9 +1,13 @@
 package me.xDark.hybridanticheat.listener;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.player.PlayerBedEnterEvent;
+import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
 import me.xDark.hybridanticheat.AntiCheatSettings.CheckType;
@@ -11,6 +15,7 @@ import me.xDark.hybridanticheat.HybridAntiCheat;
 import me.xDark.hybridanticheat.api.HybridAPI;
 import me.xDark.hybridanticheat.api.User;
 import me.xDark.hybridanticheat.checks.CheckManager;
+import me.xDark.hybridanticheat.events.ValidateEvent;
 
 public class CheckListener implements Listener {
 
@@ -31,6 +36,8 @@ public class CheckListener implements Listener {
 			CheckManager.getCheck("Flight").doCheck(user, e);
 		if (HybridAntiCheat.instance().getSettings().isEnabled(CheckType.NoClip))
 			CheckManager.getCheck("NoClip").doCheck(user, e);
+		if (HybridAntiCheat.instance().getSettings().isEnabled(CheckType.InvalidAction))
+			CheckManager.getCheck("BedExploit").doCheck(user, e);
 	}
 
 	@EventHandler
@@ -44,5 +51,25 @@ public class CheckListener implements Listener {
 			CheckManager.getCheck("Criticals").doCheck(user, e);
 		if (HybridAntiCheat.instance().getSettings().isEnabled(CheckType.KillAura))
 			CheckManager.getCheck("KillAura").doCheck(user, e);
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onInteract(PlayerBedEnterEvent e) {
+		Player p = e.getPlayer();
+		if (p.hasPermission("hac.bypass.bed"))
+			return;
+		User user = HybridAPI.getUser(p);
+		if (user == null)
+			return;
+		if (user.isSleeping()) {
+			Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.InvalidAction));
+			HybridAPI.disconnectUser(user, CheckType.InvalidAction);
+		} else
+			HybridAPI.getUser(p).setSleeping(true);
+	}
+
+	@EventHandler
+	public void onBedEnter(PlayerBedLeaveEvent e) {
+		HybridAPI.getUser(e.getPlayer()).setSleeping(false);
 	}
 }

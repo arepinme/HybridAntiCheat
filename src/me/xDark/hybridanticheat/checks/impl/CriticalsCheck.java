@@ -2,6 +2,7 @@ package me.xDark.hybridanticheat.checks.impl;
 
 import org.bukkit.Bukkit;
 import org.bukkit.block.BlockFace;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
@@ -16,12 +17,14 @@ public class CriticalsCheck implements Check {
 	@SuppressWarnings("deprecation")
 	@Override
 	public void doCheck(User user, Event e) {
+		Player p = user.getHandle();
+		if (p.hasPermission("hac.bypass.criticals"))
+			return;
 		EntityDamageByEntityEvent event = CastUtil.cast(e);
-		if (!user.getHandle().getAllowFlight() && !user.getHandle().isOnGround()
-				&& user.getHandle().getLocation().getY() % 1 == 0.0
-				&& user.getHandle().getLocation().getBlock().getRelative(BlockFace.DOWN).getType().isSolid()) {
-			Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.KillAura));
+		if (!p.getAllowFlight() && !p.isOnGround() && p.getLocation().getY() % 1 == 0.0
+				&& p.getLocation().getBlock().getRelative(BlockFace.DOWN).getType().isSolid()) {
 			event.setCancelled(true);
+			Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.Criticals));
 		}
 	}
 }

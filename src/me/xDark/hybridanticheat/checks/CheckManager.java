@@ -2,6 +2,7 @@ package me.xDark.hybridanticheat.checks;
 
 import java.util.HashMap;
 
+import me.xDark.hybridanticheat.checks.impl.BedCheck;
 import me.xDark.hybridanticheat.checks.impl.CriticalsCheck;
 import me.xDark.hybridanticheat.checks.impl.FastLadderCheck;
 import me.xDark.hybridanticheat.checks.impl.FlightCheck;
@@ -23,7 +24,7 @@ public class CheckManager {
 		checks.put("KillAura", new KillAuraCheck());
 		checks.put("Criticals", new CriticalsCheck());
 		checks.put("NoClip", new NoClipCheck());
-
+		checks.put("BedExploit", new BedCheck());
 	}
 
 	public static HashMap<String, Check> getChecks() {

@@ -23,18 +23,21 @@ public class KillAuraCheck implements Check {
 
 	@Override
 	public void doCheck(User user, Event e) {
+		Player p = user.getHandle();
+		if (p.hasPermission("hac.bypass.killaura"))
+			return;
 		EntityDamageByEntityEvent event = CastUtil.cast(e);
-		if (event.getEntity() == user.getHandle()) {
+		if (event.getEntity() == p) {
 			event.setCancelled(true);
 			Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.KillAura));
 			HybridAPI.disconnectUser(user, CheckType.KillAura);
 			return;
 		}
-		if (user.getHandle().getLocation().distance(event.getEntity().getLocation()) > 4.6D) {
+		if (p.getLocation().distance(event.getEntity().getLocation()) > 4.6D) {
 			event.setCancelled(true);
 			Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.KillAura));
 		}
-		if (!isLookingAtEntity(user.getHandle(), event.getEntity())) {
+		if (!isLookingAtEntity(p, event.getEntity())) {
 			event.setCancelled(true);
 			Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.KillAura));
 		}

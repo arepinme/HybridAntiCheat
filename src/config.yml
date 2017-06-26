@@ -20,3 +20,5 @@ checks:
     enabled: true
   noclip:
     enabled: true
+  invalidaction:
+    enabled: true

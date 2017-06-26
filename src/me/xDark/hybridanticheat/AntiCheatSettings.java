@@ -30,6 +30,7 @@ public class AntiCheatSettings {
 		values.put(CheckType.KillAura, getBoolean("checks.killaura.enabled"));
 		values.put(CheckType.Criticals, getBoolean("checks.criticals.enabled"));
 		values.put(CheckType.NoClip, getBoolean("checks.noclip.enabled"));
+		values.put(CheckType.InvalidAction, getBoolean("checks.invalidaction.enabled"));
 	}
 
 	@Override
@@ -59,7 +60,7 @@ public class AntiCheatSettings {
 	}
 
 	public static enum CheckType {
-		Flight, HighJump, SpeedHack, Teleport, InvMove, FastLadder, KillAura, Criticals, Exploits, NoClip;
+		Flight, HighJump, SpeedHack, Teleport, InvMove, FastLadder, KillAura, Criticals, Exploits, NoClip, InvalidAction;
 	}
 
 }

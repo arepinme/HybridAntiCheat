@@ -4,6 +4,9 @@ import java.util.HashMap;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
 import com.comphenix.protocol.PacketType;
@@ -12,6 +15,7 @@ import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.wrappers.BlockPosition;
 
 import me.xDark.hybridanticheat.AntiCheatSettings.CheckType;
 import me.xDark.hybridanticheat.HybridAntiCheat;
@@ -99,6 +103,48 @@ public class ProtocolHook {
 							}
 						}
 					});
+			ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(HybridAntiCheat.instance(),
+					ListenerPriority.LOWEST, new PacketType[] { PacketType.Play.Client.BLOCK_DIG }) {
+				@Override
+				public void onPacketReceiving(PacketEvent e) {
+					Player p = e.getPlayer();
+					if (p.hasPermission("hac.bypass.block"))
+						return;
+					User user = HybridAPI.getUser(p);
+					if (user == null)
+						return;
+					PacketContainer container = e.getPacket();
+					BlockPosition blockPos = container.getBlockPositionModifier().read(0);
+					Location blockLocation = new Location(p.getWorld(), blockPos.getX(), blockPos.getY(),
+							blockPos.getZ());
+					if ((p.getLocation().distance(blockLocation) > (p.getGameMode() == GameMode.CREATIVE ? 7D : 5.5D))
+							|| (HybridAPI.isInvalidMaterial(blockLocation.getBlock().getType()))) {
+						e.setCancelled(true);
+						Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.InvalidAction));
+					}
+				}
+			});
+			ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(HybridAntiCheat.instance(),
+					ListenerPriority.LOWEST, new PacketType[] { PacketType.Play.Client.BLOCK_PLACE }) {
+				@Override
+				public void onPacketReceiving(PacketEvent e) {
+					Player p = e.getPlayer();
+					if (p.hasPermission("hac.bypass.block"))
+						return;
+					User user = HybridAPI.getUser(p);
+					if (user == null)
+						return;
+					PacketContainer container = e.getPacket();
+					BlockPosition blockPos = container.getBlockPositionModifier().read(0);
+					Location blockLocation = new Location(p.getWorld(), blockPos.getX(), blockPos.getY(),
+							blockPos.getZ());
+					if ((p.getLocation().distance(blockLocation) > (p.getGameMode() == GameMode.CREATIVE ? 7D : 5.5D))
+							|| (blockLocation.getBlock().getType() == Material.AIR)) {
+						e.setCancelled(true);
+						Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.InvalidAction));
+					}
+				}
+			});
 		} catch (Exception exc) {
 			HybridAntiCheat.instance().getLogger().log(Level.SEVERE,
 					"Error hooking in ProtocolLib. Some checks has been disabled.", exc);

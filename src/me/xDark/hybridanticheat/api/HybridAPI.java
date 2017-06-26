@@ -3,11 +3,14 @@ package me.xDark.hybridanticheat.api;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
 import me.xDark.hybridanticheat.AntiCheatSettings.CheckType;
+import me.xDark.hybridanticheat.checks.impl.FlightCheck;
 import me.xDark.hybridanticheat.HybridAntiCheat;
 import me.xDark.hybridanticheat.hook.ProtocolHook;
 import me.xDark.hybridanticheat.utils.ClassUtil;
@@ -53,6 +56,7 @@ public class HybridAPI {
 
 	public static void registerPlayer(Player player) {
 		users.put(player, new User(player));
+		FlightCheck.floatingTime.put(player, new AtomicInteger(0));
 	}
 
 	public static void unregisterPlayer(Player player) {
@@ -82,6 +86,17 @@ public class HybridAPI {
 	public static int getPing(Player handle) {
 		return ReflectionUtil.getValue(pingField,
 				ReflectionUtil.invoke(getHandleMethod, craftPlayerClass.cast(handle)));
+	}
+
+	public static boolean isInvalidMaterial(Material type) {
+		return (type == Material.WATER || type == Material.STATIONARY_WATER || type == Material.LAVA
+				|| type == Material.STATIONARY_LAVA || type == Material.AIR);
+	}
+
+	public static void clearVLs() {
+		users.values().forEach(user -> {
+			user.resetVL();
+		});
 	}
 
 	public static HashMap<Player, User> getUsers() {
