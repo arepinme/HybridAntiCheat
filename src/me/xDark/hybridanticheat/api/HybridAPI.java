@@ -1,14 +1,20 @@
 package me.xDark.hybridanticheat.api;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
@@ -29,6 +35,12 @@ public class HybridAPI {
 
 	private static final Field pingField;
 
+	private static final File reportFile = new File(HybridAntiCheat.instance().getDataFolder(), "reports.yml");
+
+	private static YamlConfiguration reportYaml = YamlConfiguration.loadConfiguration(reportFile);
+
+	private static final TreeMap<Integer, Report> reports = new TreeMap<>();
+
 	static {
 		craftVersion = Bukkit.getServer().getClass().getPackage().getName();
 		// http://rubukkit.org/threads/wip-code-snippets-poleznye-kuski-koda-i-nekotorye-neochevidnye-veschi-likbez.134693/page-2
@@ -48,6 +60,7 @@ public class HybridAPI {
 		Bukkit.getOnlinePlayers().forEach((player) -> {
 			registerPlayer(player);
 		});
+		loadReports();
 	}
 
 	public static void stop() {
@@ -58,6 +71,39 @@ public class HybridAPI {
 		FlightCheck.floatingTime.clear();
 		ProtocolHook.teleportAttempts.clear();
 		ProtocolHook.channelRegisterMap.clear();
+		ProtocolHook.safetyLocations.clear();
+
+		saveReports();
+
+	}
+
+	private static void loadReports() {
+		reportYaml.getKeys(false).forEach((reportId) -> {
+			int id = Integer.parseInt(reportId);
+			String sender = reportYaml.getString(reportId + ".sender");
+			String target = reportYaml.getString(reportId + ".target");
+			String reason = reportYaml.getString(reportId + ".reason");
+			reports.put(id, new Report(id, sender, target, reason));
+		});
+	}
+
+	private static void saveReports() {
+		reportFile.delete();
+		try {
+			reportFile.createNewFile();
+		} catch (IOException e) {
+		}
+		reportYaml = new YamlConfiguration();
+		reports.forEach((id, report) -> {
+			reportYaml.set(String.valueOf(id) + ".sender", report.getSender());
+			reportYaml.set(String.valueOf(id) + ".target", report.getTarget());
+			reportYaml.set(String.valueOf(id) + ".reason", report.getReason());
+		});
+		try {
+			reportYaml.save(reportFile);
+		} catch (IOException e) {
+		}
+		reports.clear();
 	}
 
 	public static void registerPlayer(Player player) {
@@ -77,16 +123,22 @@ public class HybridAPI {
 		ProtocolHook.teleportAttempts.remove(player);
 	}
 
-	public static void disconnectUser(User user, CheckType checkType) {
+	public static void performActions(User user, CheckType checkType) {
 		if (user == null)
 			return;
 		if (user.isVerbose())
 			return;
 		HybridAntiCheat.callSyncMethod(() -> {
-			user.getHandle().kickPlayer(HybridAntiCheat.getPrefix()
-					+ "\n§cYou has been kicked from the server!\n§fKicked for: §c" + checkType.name());
-			user.gc();
-			users.remove(user.getHandle());
+			HybridAntiCheat.instance().getSettings().getActionsForCheck(checkType).forEach((action) -> {
+				Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(),
+						HybridAntiCheat.instance().getSettings().getActions().get(action)
+								.replace("%player%", user.getHandle().getPlayer().getName())
+								.replace("%checktype%", checkType.name()));
+			});
+			if (!user.getHandle().isOnline()) {
+				user.gc();
+				users.remove(user.getHandle());
+			}
 			return (Void) null;
 		});
 	}
@@ -118,6 +170,59 @@ public class HybridAPI {
 		users.values().forEach(user -> {
 			user.resetVL();
 		});
+	}
+
+	public static void showReports(CommandSender s, int page) {
+		int pages = (int) (reports.size() / 8F);
+		if (pages == 0) {
+			for (Entry<Integer, Report> entry : reports.entrySet()) {
+				Report report = entry.getValue();
+				s.sendMessage("-----------------------------");
+				s.sendMessage(HybridAntiCheat.getPrefix() + "Номер жалобы: " + report.getId());
+				s.sendMessage(HybridAntiCheat.getPrefix() + "Отправитель жалобы: " + report.getSender());
+				s.sendMessage(HybridAntiCheat.getPrefix() + "Нарушитель: " + report.getTarget());
+				s.sendMessage(HybridAntiCheat.getPrefix() + "Причина: " + report.getReason());
+				s.sendMessage("-----------------------------");
+				s.sendMessage("");
+			}
+			return;
+		}
+		if (page > pages || page < 1) {
+			s.sendMessage(HybridAntiCheat.getPrefix() + "Страница задана не верно.");
+			return;
+		}
+		int i = 0;
+		for (Entry<Integer, Report> entry : reports.entrySet()) {
+			i++;
+			if (i <= (page - 1) * 8)
+				continue;
+			if (i > page * 8)
+				break;
+			Report report = entry.getValue();
+			s.sendMessage("-----------------------------");
+			s.sendMessage(HybridAntiCheat.getPrefix() + "Номер жалобы: " + report.getId());
+			s.sendMessage(HybridAntiCheat.getPrefix() + "Отправитель жалобы: " + report.getSender());
+			s.sendMessage(HybridAntiCheat.getPrefix() + "Нарушитель: " + report.getTarget());
+			s.sendMessage(HybridAntiCheat.getPrefix() + "Причина: " + report.getReason());
+			s.sendMessage("-----------------------------");
+			s.sendMessage("");
+		}
+	}
+
+	public static int performReport(String sender, String target, String reason) {
+		int nextReport = reports.size() + 1;
+		reports.put(nextReport, new Report(nextReport, sender, target, reason));
+		return nextReport;
+	}
+
+	public static boolean hasReportImmunity(String player) {
+		Player target = Bukkit.getPlayer(player);
+		return HybridAntiCheat.instance().getSettings().getImmunityReportPlayers().contains(player.toLowerCase())
+				|| (target != null && HybridAntiCheat.checkPermission(target, "command.report.immunity"));
+	}
+
+	public static boolean removeReport(int reportId) {
+		return reports.remove(reportId) != null;
 	}
 
 	public static HashMap<Player, User> getUsers() {

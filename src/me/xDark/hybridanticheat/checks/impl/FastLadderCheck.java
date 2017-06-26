@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerMoveEvent;
 
+import me.xDark.hybridanticheat.HybridAntiCheat;
 import me.xDark.hybridanticheat.AntiCheatSettings.CheckType;
 import me.xDark.hybridanticheat.api.User;
 import me.xDark.hybridanticheat.checks.Check;
@@ -19,12 +20,12 @@ public class FastLadderCheck implements Check {
 	@SuppressWarnings("deprecation")
 	@Override
 	public void doCheck(User user, Event e) {
-		Player p = user.getHandle();
-		if (p.hasPermission("hac.bypass.fastladder"))
+		if (HybridAntiCheat.checkPermission(user.getHandle(), "bypass.fastladder"))
 			return;
 		PlayerMoveEvent event = CastUtil.cast(e);
 		if (event.getTo().getY() <= event.getFrom().getY())
 			return;
+		Player p = user.getHandle();
 		Material mat = user.getHandle().getLocation().getBlock().getType();
 		double difference = MathUtil.diff(event.getFrom().getY(), event.getTo().getY());
 		if ((mat == Material.LADDER || mat == Material.VINE) && !p.isOnGround()

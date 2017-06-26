@@ -10,6 +10,7 @@ import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import me.xDark.hybridanticheat.HybridAntiCheat;
 import me.xDark.hybridanticheat.AntiCheatSettings.CheckType;
 import me.xDark.hybridanticheat.api.User;
 import me.xDark.hybridanticheat.checks.Check;
@@ -21,12 +22,12 @@ public class HighJumpCheck implements Check {
 
 	@Override
 	public void doCheck(User user, Event e) {
+		if (HybridAntiCheat.checkPermission(user.getHandle(), "bypass.highjump"))
+			return;
 		if (user.isSleeping())
 			return;
 		Player p = user.getHandle();
 		if (p.getAllowFlight() && p.isFlying())
-			return;
-		if (p.hasPermission("hac.bypass.highjump"))
 			return;
 		PlayerMoveEvent moveEvent = CastUtil.cast(e);
 		double difference = moveEvent.getTo().getY() - moveEvent.getFrom().getY();

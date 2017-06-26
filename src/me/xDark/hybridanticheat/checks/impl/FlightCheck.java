@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerMoveEvent;
 
+import me.xDark.hybridanticheat.HybridAntiCheat;
 import me.xDark.hybridanticheat.AntiCheatSettings.CheckType;
 import me.xDark.hybridanticheat.api.User;
 import me.xDark.hybridanticheat.checks.Check;
@@ -27,7 +28,7 @@ public class FlightCheck implements Check {
 	@Override
 	public void doCheck(User user, Event e) {
 		Player p = user.getHandle();
-		if (p.hasPermission("hac.bypass.flight"))
+		if (HybridAntiCheat.checkPermission(user.getHandle(), "bypass.flight"))
 			return;
 		if (p.getAllowFlight() && p.isFlying())
 			return;

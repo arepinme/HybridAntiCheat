@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerMoveEvent;
 
+import me.xDark.hybridanticheat.HybridAntiCheat;
 import me.xDark.hybridanticheat.AntiCheatSettings.CheckType;
 import me.xDark.hybridanticheat.api.User;
 import me.xDark.hybridanticheat.checks.Check;
@@ -17,9 +18,9 @@ public class NoClipCheck implements Check {
 	@SuppressWarnings("deprecation")
 	@Override
 	public void doCheck(User user, Event e) {
-		Player p = user.getHandle();
-		if (p.hasPermission("hac.bypass.fastladder"))
+		if (HybridAntiCheat.checkPermission(user.getHandle(), "bypass.fastladder"))
 			return;
+		Player p = user.getHandle();
 		if (user.isSleeping())
 			return;
 		PlayerMoveEvent event = CastUtil.cast(e);

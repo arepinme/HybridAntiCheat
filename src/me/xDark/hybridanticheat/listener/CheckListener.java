@@ -64,7 +64,7 @@ public class CheckListener implements Listener {
 			return;
 		if (user.isSleeping()) {
 			Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.InvalidAction));
-			HybridAPI.disconnectUser(user, CheckType.InvalidAction);
+			HybridAPI.performActions(user, CheckType.InvalidAction);
 		} else
 			HybridAPI.getUser(p).setSleeping(true);
 	}

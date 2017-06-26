@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 
 import com.google.common.collect.Maps;
 
+import me.xDark.hybridanticheat.HybridAntiCheat;
 import me.xDark.hybridanticheat.utils.Timer;
 
 public class User {
@@ -16,7 +17,7 @@ public class User {
 
 	private final HashMap<String, Object> values = Maps.<String, Object>newHashMap();
 
-	private final Timer packetTimer = new Timer(), attackTimer = new Timer();
+	private final Timer packetTimer = new Timer(), attackTimer = new Timer(), reportTimer = new Timer();
 
 	public User(Player handle) {
 		this.handle = handle;
@@ -31,6 +32,7 @@ public class User {
 		values.put("verbose", false);
 		values.put("safeLocation", handle.getLocation());
 		values.put("sleeping", false);
+		reportTimer.setStartMS(System.currentTimeMillis() - HybridAntiCheat.instance().getSettings().getReportDelay());
 	}
 
 	public void gc() {
@@ -93,8 +95,11 @@ public class User {
 		values.put("safeLocation", safe);
 	}
 
-	public boolean isSleeping() {
+	public boolean hasReportTimePassed() {
+		return reportTimer.hasMSPassed(HybridAntiCheat.instance().getSettings().getReportDelay());
+	}
 
+	public boolean isSleeping() {
 		return values.get("sleeping") == null ? false : ((boolean) values.get("sleeping"));
 	}
 
@@ -121,6 +126,10 @@ public class User {
 
 	public Timer getAttackTimer() {
 		return attackTimer;
+	}
+
+	public Timer getReportTimer() {
+		return reportTimer;
 	}
 
 }

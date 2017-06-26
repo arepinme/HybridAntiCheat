@@ -3,22 +3,43 @@ config:
 checks:
   maxVL: 10
   flight:
+    action: kick ban
     enabled: true
   highjump:
+    action: kick ban
     enabled: true
   speedhack:
+    action: kick ban
     enabled: true
   teleport:
+    action: kick ban
     enabled: true
   invmove:
+    action: kick ban
     enabled: true
   fastladder:
+    action: kick ban
     enabled: true
   killaura:
+    action: kick ban
     enabled: true
   criticals:
+    action: kick ban
     enabled: true
   noclip:
+    action: kick ban
     enabled: true
   invalidaction:
+    action: kick ban
     enabled: true
+  exploits:
+    action: kick ban
+    enabled: true
+actions:
+  kick: kick %player% you have been kicked for %checktype%
+  ban: ban %player% You have been banned from the server for %checktype%
+  freeze: freeze %player%
+report:
+  immunity:
+    - xDark
+  delay: 60

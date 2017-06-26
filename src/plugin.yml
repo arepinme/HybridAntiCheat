@@ -1,7 +1,8 @@
 name: HybridAntiCheat
 author: xDark
-version: 0.8
+version: 0.9
 depend: [ProtocolLib]
 main: me.xDark.hybridanticheat.HybridAntiCheat
 commands:
   hac: {}
+  report: {}

@@ -5,6 +5,7 @@ import org.bukkit.GameMode;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerMoveEvent;
 
+import me.xDark.hybridanticheat.HybridAntiCheat;
 import me.xDark.hybridanticheat.AntiCheatSettings.CheckType;
 import me.xDark.hybridanticheat.api.User;
 import me.xDark.hybridanticheat.checks.Check;
@@ -15,7 +16,7 @@ public class SpeedHackCheck implements Check {
 
 	@Override
 	public void doCheck(User user, Event e) {
-		if (user.getHandle().hasPermission("hac.bypass.speedhack"))
+		if (HybridAntiCheat.checkPermission(user.getHandle(), "bypass.speedhack"))
 			return;
 		if (user.getHandle().getAllowFlight() && user.getHandle().isFlying())
 			return;

@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
+import me.xDark.hybridanticheat.HybridAntiCheat;
 import me.xDark.hybridanticheat.AntiCheatSettings.CheckType;
 import me.xDark.hybridanticheat.api.HybridAPI;
 import me.xDark.hybridanticheat.api.User;
@@ -23,14 +24,14 @@ public class KillAuraCheck implements Check {
 
 	@Override
 	public void doCheck(User user, Event e) {
-		Player p = user.getHandle();
-		if (p.hasPermission("hac.bypass.killaura"))
+		if (HybridAntiCheat.checkPermission(user.getHandle(), "bypass.killaura"))
 			return;
+		Player p = user.getHandle();
 		EntityDamageByEntityEvent event = CastUtil.cast(e);
 		if (event.getEntity() == p) {
 			event.setCancelled(true);
 			Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.KillAura));
-			HybridAPI.disconnectUser(user, CheckType.KillAura);
+			HybridAPI.performActions(user, CheckType.KillAura);
 			return;
 		}
 		if (p.getLocation().distance(event.getEntity().getLocation()) > 4.6D) {

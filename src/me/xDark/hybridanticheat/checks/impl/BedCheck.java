@@ -1,11 +1,11 @@
 package me.xDark.hybridanticheat.checks.impl;
 
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerMoveEvent;
 
 import me.xDark.hybridanticheat.AntiCheatSettings.CheckType;
+import me.xDark.hybridanticheat.HybridAntiCheat;
 import me.xDark.hybridanticheat.api.User;
 import me.xDark.hybridanticheat.checks.Check;
 import me.xDark.hybridanticheat.events.ValidateEvent;
@@ -15,8 +15,7 @@ public class BedCheck implements Check {
 
 	@Override
 	public void doCheck(User user, Event e) {
-		Player p = user.getHandle();
-		if (p.hasPermission("hac.bypass.bed"))
+		if (HybridAntiCheat.checkPermission(user.getHandle(), "bypass.bed"))
 			return;
 		PlayerMoveEvent event = CastUtil.cast(e);
 		boolean equals = ((event.getFrom().getX() == event.getTo().getX())

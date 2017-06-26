@@ -1,6 +1,11 @@
 package me.xDark.hybridanticheat;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.Callable;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -10,6 +15,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import me.xDark.hybridanticheat.api.HybridAPI;
 import me.xDark.hybridanticheat.checks.CheckManager;
+import me.xDark.hybridanticheat.command.ReportCommand;
 import me.xDark.hybridanticheat.hook.ProtocolHook;
 import me.xDark.hybridanticheat.listener.CheckListener;
 import me.xDark.hybridanticheat.listener.UserListener;
@@ -27,6 +33,8 @@ public class HybridAntiCheat extends JavaPlugin {
 	private static final Listener userListener = new UserListener(), validateListener = new ValidateListener(),
 			moveListener = new CheckListener();
 
+	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.ROOT);
+
 	public HybridAntiCheat() {
 		instance = this;
 	}
@@ -34,7 +42,15 @@ public class HybridAntiCheat extends JavaPlugin {
 	@Override
 	public void onEnable() {
 		saveDefaultConfig();
-		(settings = new AntiCheatSettings(getConfig())).apply();
+		try {
+			(settings = new AntiCheatSettings(getConfig())).apply();
+		} catch (Exception exc) {
+			getLogger().log(Level.SEVERE, "Failed to laod configuration. Restoring default YAML file..", exc);
+			new File(getDataFolder(), "config.yml")
+					.renameTo(new File(getDataFolder(), "config.old" + dateFormat.format(new Date()) + ".yml"));
+			saveDefaultConfig();
+			(settings = new AntiCheatSettings(getConfig())).apply();
+		}
 		if (settings.isAutoUpdateEnabled())
 			updateTaskId = getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
 				reload(null);
@@ -44,6 +60,7 @@ public class HybridAntiCheat extends JavaPlugin {
 		}, 1L, 20L * 15L);
 		ClassUtil.init();
 		HybridAPI.start();
+		getCommand("report").setExecutor(new ReportCommand());
 		getServer().getPluginManager().registerEvents(userListener, this);
 		getServer().getPluginManager().registerEvents(validateListener, this);
 		getServer().getPluginManager().registerEvents(moveListener, this);
@@ -56,7 +73,9 @@ public class HybridAntiCheat extends JavaPlugin {
 		AntiCheatSettings old = settings;
 		try {
 			reloadConfig();
+			ProtocolHook.unhook();
 			(settings = new AntiCheatSettings(getConfig())).apply();
+			ProtocolHook.hook();
 			if (!settings.isAutoUpdateEnabled())
 				getServer().getScheduler().cancelTask(updateTaskId);
 			if (s != null)
@@ -87,34 +106,35 @@ public class HybridAntiCheat extends JavaPlugin {
 	public boolean onCommand(CommandSender s, Command cmd, String str, String[] args) {
 		if (s.equals(Bukkit.getConsoleSender()))
 			return true;
-		if (!checkPermission(s, "commands.use")) {
-			s.sendMessage(getPrefix() + " §cNo permission to perform this action.");
+		if (!checkPermission(s, "commands.hac")) {
+			s.sendMessage(getPrefix() + " §cУ вас нет прав на выполнение данной команды.");
 			return true;
 		}
 		if (args.length == 0) {
-			s.sendMessage(getPrefix() + "§f/hac verbose §3- toggles verbose off/on");
-			s.sendMessage(getPrefix() + "§f/hac reload §3- reloads configuration");
+			s.sendMessage(getPrefix() + "§f/hac verbose §3- §fвключает§6/§fвыключает режим verbose");
+			s.sendMessage(getPrefix() + "§f/hac reload §3- §fперезагружает плагин");
+			s.sendMessage(getPrefix() + "§fВерся: " + getDescription().getVersion());
 			return true;
 		}
 		if (args[0].equalsIgnoreCase("verbose")) {
 			if (!checkPermission(s, "commands.verbose")) {
-				s.sendMessage(getPrefix() + " §cNo permission to perform this action.");
+				s.sendMessage(getPrefix() + " §cУ вас нет прав на выполнение данной команды.");
 				return true;
 			}
 			boolean verbose = HybridAPI.getUser(s).updateVerbose();
-			s.sendMessage(getPrefix() + "§fVerbose turned " + (verbose ? "§aon" : "§coff"));
+			s.sendMessage(getPrefix() + "§fРежим verbose " + (verbose ? "§aвключен" : "§cвыключен"));
 		} else if (args[0].equalsIgnoreCase("reload")) {
 			if (!checkPermission(s, "commands.reload")) {
-				s.sendMessage(getPrefix() + " §cNo permission to perform this action.");
+				s.sendMessage(getPrefix() + " §cУ вас нет прав на выполнение данной команды.");
 				return true;
 			}
 			reload(s);
 		} else
-			s.sendMessage(getPrefix() + "§cCommand not found.");
+			s.sendMessage(getPrefix() + "§cКоманда не найдена.");
 		return true;
 	}
 
-	private static boolean checkPermission(CommandSender s, String permission) {
+	public static boolean checkPermission(CommandSender s, String permission) {
 		return s.hasPermission("hac." + permission);
 	}
 

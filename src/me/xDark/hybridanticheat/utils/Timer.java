@@ -19,4 +19,8 @@ public class Timer {
 	public boolean hasMSPassed(long time) {
 		return (getMSPassed() >= time);
 	}
+
+	public void setStartMS(long start) {
+		startMS = start;
+	}
 }
