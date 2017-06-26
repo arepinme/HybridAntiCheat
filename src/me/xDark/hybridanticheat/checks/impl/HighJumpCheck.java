@@ -31,7 +31,7 @@ public class HighJumpCheck implements Check {
 	}
 
 	@SuppressWarnings("deprecation")
-	private static double getYMotion(Player p) {
+	public static double getYMotion(Player p) {
 		double originalDifference = 0.425D;
 		if (p.hasPotionEffect(PotionEffectType.JUMP)) {
 			PotionEffect jump = null;

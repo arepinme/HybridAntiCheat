@@ -1,6 +1,5 @@
 package me.xDark.hybridanticheat;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.bukkit.configuration.file.FileConfiguration;
@@ -10,7 +9,6 @@ public class AntiCheatSettings {
 	private final FileConfiguration cfg;
 
 	private final HashMap<CheckType, Boolean> values = new HashMap<>();
-
 
 	private final boolean autoUpdateEnabled;
 
