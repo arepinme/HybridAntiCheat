@@ -1,0 +1,22 @@
+config:
+  update: true
+checks:
+  maxVL: 10
+  flight:
+    enabled: true
+  highjump:
+    enabled: true
+  speedhack:
+    enabled: true
+  teleport:
+    enabled: true
+  invmove:
+    enabled: true
+  fastladder:
+    enabled: true
+  killaura:
+    enabled: true
+  criticals:
+    enabled: true
+  noclip:
+    enabled: true
