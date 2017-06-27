@@ -69,12 +69,12 @@ public class HybridAntiCheat extends JavaPlugin {
 		// }, 1L, 20L * 2L);
 		ClassUtil.init();
 		HybridAPI.start();
+		CheckManager.init();
+		ProtocolHook.hook();
 		getCommand("report").setExecutor(new ReportCommand());
 		getServer().getPluginManager().registerEvents(userListener, this);
 		getServer().getPluginManager().registerEvents(validateListener, this);
 		getServer().getPluginManager().registerEvents(moveListener, this);
-		CheckManager.init();
-		ProtocolHook.hook();
 		getLogger().info("enabled");
 	}
 
