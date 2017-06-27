@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -19,9 +20,11 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 import me.xDark.hybridanticheat.AntiCheatSettings.CheckType;
+import me.xDark.hybridanticheat.bot.FakeBot;
 import me.xDark.hybridanticheat.HybridAntiCheat;
 import me.xDark.hybridanticheat.checks.impl.FlightCheck;
 import me.xDark.hybridanticheat.checks.impl.NoFallCheck;
+import me.xDark.hybridanticheat.events.ValidateEvent;
 import me.xDark.hybridanticheat.hook.ProtocolHook;
 import me.xDark.hybridanticheat.utils.ClassUtil;
 import me.xDark.hybridanticheat.utils.ReflectionUtil;
@@ -41,6 +44,8 @@ public class HybridAPI {
 	private static YamlConfiguration reportYaml = YamlConfiguration.loadConfiguration(reportFile);
 
 	private static final TreeMap<Integer, Report> reports = new TreeMap<>();
+
+	public static final HashSet<String> actionsPerformed = new HashSet<>();
 
 	static {
 		craftVersion = Bukkit.getServer().getClass().getPackage().getName();
@@ -73,7 +78,8 @@ public class HybridAPI {
 		ProtocolHook.teleportAttempts.clear();
 		ProtocolHook.channelRegisterMap.clear();
 		ProtocolHook.safetyLocations.clear();
-
+		NoFallCheck.fallDistance.clear();
+		actionsPerformed.clear();
 		saveReports();
 
 	}
@@ -122,13 +128,16 @@ public class HybridAPI {
 		ProtocolHook.channelRegisterMap.remove(player);
 		FlightCheck.floatingTime.remove(player);
 		ProtocolHook.teleportAttempts.remove(player);
-		NoFallCheck.fallDistance.clear();
 	}
 
 	public static void performActions(User user, CheckType checkType) {
 		if (user == null)
 			return;
 		if (user.isVerbose())
+			return;
+		if (!user.getHandle().isOnline())
+			return;
+		if (actionsPerformed.contains(user.getHandle().getName()))
 			return;
 		HybridAntiCheat.callSyncMethod(() -> {
 			HybridAntiCheat.instance().getSettings().getActionsForCheck(checkType).forEach((action) -> {
@@ -143,6 +152,7 @@ public class HybridAPI {
 			}
 			return (Void) null;
 		});
+		actionsPerformed.add(user.getHandle().getName());
 	}
 
 	public static User getUser(Object o) {
@@ -225,6 +235,28 @@ public class HybridAPI {
 
 	public static boolean removeReport(int reportId) {
 		return reports.remove(reportId) != null;
+	}
+
+	public static void spawnRandomBots() {
+		if (users.size() == 0)
+			return;
+		users.values().forEach((user) -> {
+			if (!user.getBot().isSpawned())
+				user.getBot().spawn();
+		});
+	}
+
+	public static void checkBots() {
+		if (users.size() == 0)
+			return;
+		users.values().forEach((user) -> {
+			FakeBot bot = user.getBot();
+			if (bot.isSpawned() && bot.getTicksExisted() >= 100L) {
+				if (bot.wasAttacked())
+					Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.KillAura));
+				user.getBot().destory();
+			}
+		});
 	}
 
 	public static HashMap<Player, User> getUsers() {

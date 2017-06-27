@@ -7,6 +7,7 @@ import me.xDark.hybridanticheat.checks.impl.CriticalsCheck;
 import me.xDark.hybridanticheat.checks.impl.FastLadderCheck;
 import me.xDark.hybridanticheat.checks.impl.FlightCheck;
 import me.xDark.hybridanticheat.checks.impl.HighJumpCheck;
+import me.xDark.hybridanticheat.checks.impl.InventoryMoveCheck;
 import me.xDark.hybridanticheat.checks.impl.KillAuraCheck;
 import me.xDark.hybridanticheat.checks.impl.NoClipCheck;
 import me.xDark.hybridanticheat.checks.impl.NoFallCheck;
@@ -29,6 +30,7 @@ public class CheckManager {
 		checks.put("BedExploit", new BedCheck());
 		checks.put("NoSlowDown", new NoSlowDownCheck());
 		checks.put("NoFall", new NoFallCheck());
+		checks.put("InvMove", new InventoryMoveCheck());
 	}
 
 	public static HashMap<String, Check> getChecks() {

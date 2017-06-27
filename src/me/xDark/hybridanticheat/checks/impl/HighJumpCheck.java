@@ -34,10 +34,9 @@ public class HighJumpCheck implements Check {
 		double originalDifference = getYMotion(p);
 		Material fristMaterial = p.getLocation().getBlock().getType(),
 				secondMaterial = p.getLocation().getBlock().getRelative(BlockFace.DOWN).getType();
-
+		boolean valid = difference <= originalDifference;
 		if (fristMaterial != Material.WATER && secondMaterial != Material.WATER)
-			if (difference > originalDifference
-					|| ((difference = MathHelper.round(difference, 3)) <= 0.15D && difference >= 0.1D)) {
+			if (!valid || !valid && ((difference = MathHelper.round(difference, 2)) <= 0.11D && difference >= 0.1D)) {
 				moveEvent.getPlayer().teleport(moveEvent.getFrom(), TeleportCause.PLUGIN);
 				Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.HighJump));
 			}

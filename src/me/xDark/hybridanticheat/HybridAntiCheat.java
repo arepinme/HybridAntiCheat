@@ -55,9 +55,15 @@ public class HybridAntiCheat extends JavaPlugin {
 			updateTaskId = getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
 				reload(null);
 			}, 1L, 20L * 60L * 5L);
-		getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
-			HybridAPI.clearVLs();
-		}, 1L, 20L * 15L);
+		//getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
+		//	HybridAPI.clearVLs();
+		//}, 1L, 20L * 15L);
+		//getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
+		//	HybridAPI.spawnRandomBots();
+		//}, 1L, 20L * 60L);
+		//getServer().getScheduler().scheduleAsyncRepeatingTask(this, () -> {
+		//	HybridAPI.checkBots();
+		//}, 1L, 20L * 2L);
 		ClassUtil.init();
 		HybridAPI.start();
 		getCommand("report").setExecutor(new ReportCommand());

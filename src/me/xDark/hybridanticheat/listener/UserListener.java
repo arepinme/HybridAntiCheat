@@ -8,10 +8,13 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import me.xDark.hybridanticheat.api.HybridAPI;
+
 public class UserListener implements Listener {
 
 	@EventHandler
 	public void onJoin(PlayerJoinEvent e) {
+		HybridAPI.actionsPerformed.remove(e.getPlayer().getName());
 		registerPlayer(e.getPlayer());
 	}
 

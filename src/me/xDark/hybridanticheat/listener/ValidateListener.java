@@ -20,7 +20,7 @@ public class ValidateListener implements Listener {
 			e.getUser().resetVL();
 			e.getUser().getHandle().getWorld().strikeLightningEffect(e.getUser().getHandle().getLocation());
 			HybridAntiCheat.instance().notify(
-					"Игрок §6" + e.getUser().getHandle().getName() + "достиг максимального числа проверок: " + vl,
+					"Игрок §6" + e.getUser().getHandle().getName() + " §fдостиг максимального числа проверок: " + vl,
 					"hac.notify.staff");
 			HybridAPI.performActions(e.getUser(), e.getCheckType());
 		}

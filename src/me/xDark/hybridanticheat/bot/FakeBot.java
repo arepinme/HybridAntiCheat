@@ -2,20 +2,24 @@ package me.xDark.hybridanticheat.bot;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-import org.bukkit.Location;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
+import javax.sound.midi.Receiver;
 
-import com.comphenix.packetwrapper.WrapperPlayServerEntityDestroy;
+import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
+
 import com.comphenix.packetwrapper.WrapperPlayServerNamedEntitySpawn;
+
+import me.xDark.hybridanticheat.utils.Timer;
 
 public class FakeBot {
 
-	private final WrapperPlayServerNamedEntitySpawn entitySpawnPacket = new WrapperPlayServerNamedEntitySpawn();
-
-	private final WrapperPlayServerEntityDestroy entityDestroyPacket = new WrapperPlayServerEntityDestroy();
-
 	private final Player packetReceiver, source;
+
+	private boolean spawned, wasAttacked;
+
+	private final Timer ticksExistedTimer = new Timer();
+
+	private final int id = ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE) + 150;
 
 	public FakeBot(Player receiver, Player source) {
 		this.packetReceiver = receiver;
@@ -31,20 +35,36 @@ public class FakeBot {
 	}
 
 	public void spawn() {
-		entitySpawnPacket.setPlayerUUID(source.getUniqueId());
-		entitySpawnPacket.setEntityID(ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE));
-		Player entity = (Player) entitySpawnPacket.getEntity(source.getWorld());
-		entity.setAllowFlight(source.getAllowFlight());
-		entity.setCanPickupItems(source.getCanPickupItems());
-		entity.setCustomName(source.getCustomName());
-		entity.setCustomNameVisible(source.isCustomNameVisible());
-		entity.setDisplayName(source.getDisplayName());
-		entity.getInventory().addItem(source.getInventory().getContents());
-		entity.setFlying(source.isFlying());
-		entitySpawnPacket.setX(packetReceiver.getLocation().getX());
-		entitySpawnPacket.setY(packetReceiver.getLocation().getY());
-		entitySpawnPacket.setZ(packetReceiver.getLocation().getZ());
-		entitySpawnPacket.receivePacket(packetReceiver);
+		WrapperPlayServerNamedEntitySpawn entitySpawn = new WrapperPlayServerNamedEntitySpawn();
+		entitySpawn.setEntityID(id);
+		entitySpawn.setPosition(packetReceiver.getLocation().toVector().add(new Vector(0, 3, 0)));
+		entitySpawn.setPlayerName(source.getName());
+		entitySpawn.setPlayerUUID(source.getUniqueId().toString());
+		spawned = true;
+	}
+
+	public void destory() {
+		spawned = false;
+	}
+
+	public long getTicksExisted() {
+		return ticksExistedTimer.getMSPassed() / 1000L;
+	}
+
+	public void onAttack() {
+		wasAttacked = true;
+	}
+
+	public boolean wasAttacked() {
+		return wasAttacked;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public boolean isSpawned() {
+		return spawned;
 	}
 
 }

@@ -44,7 +44,7 @@ public class FlightCheck implements Check {
 		ym = MathHelper.round(ym, 3);
 		double must = HighJumpCheck.getYMotion(p);
 		if (ym > 0.0D)
-			if (((ym > must) || (ym % 1 == 0.0) || (MathHelper.round(ym, 6) == 0.0D) || ym <= -1.5D)
+			if (((ym > must) || (ym % 1 == 0.0) || (MathHelper.round(ym, 6) == 0.0D) || ym <= -2D)
 					&& !p.getAllowFlight()) {
 				p.damage(1);
 				Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.Flight));

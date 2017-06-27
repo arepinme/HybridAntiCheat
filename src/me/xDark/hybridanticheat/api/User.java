@@ -1,14 +1,19 @@
 package me.xDark.hybridanticheat.api;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import me.xDark.hybridanticheat.HybridAntiCheat;
+import me.xDark.hybridanticheat.bot.FakeBot;
 import me.xDark.hybridanticheat.utils.Timer;
 
 public class User {
@@ -18,11 +23,16 @@ public class User {
 	private final HashMap<String, Object> values = Maps.<String, Object>newHashMap();
 
 	private final Timer packetTimer = new Timer(), attackTimer = new Timer(), reportTimer = new Timer(),
-			sneakTimer = new Timer();
+			sneakTimer = new Timer(), inventoryTmier = new Timer();
+
+	private final FakeBot bot;
 
 	public User(Player handle) {
 		this.handle = handle;
 		init();
+		List<Player> random = Lists.newArrayList(Bukkit.getOnlinePlayers());
+		bot = new FakeBot(handle, random.get(ThreadLocalRandom.current().nextInt(random.size())));
+		random.clear();
 	}
 
 	public void init() {
@@ -33,7 +43,9 @@ public class User {
 		values.put("verbose", false);
 		values.put("safeLocation", handle.getLocation());
 		values.put("sleeping", false);
+		values.put("invOpen", false);
 		reportTimer.setStartMS(System.currentTimeMillis() - HybridAntiCheat.instance().getSettings().getReportDelay());
+		values.put("init", System.currentTimeMillis());
 	}
 
 	public void gc() {
@@ -44,6 +56,10 @@ public class User {
 	protected void finalize() throws Throwable {
 		gc();
 		super.finalize();
+	}
+
+	public long initTime() {
+		return System.currentTimeMillis() - (long) values.get("init");
 	}
 
 	public boolean isVerbose() {
@@ -116,6 +132,16 @@ public class User {
 		values.put("sleeping", sleep);
 	}
 
+	public boolean isInventoryOpen() {
+		return values.get("invOpen") == null ? false
+				: ((boolean) values.get("invOpen")) && inventoryTmier.hasMSPassed(300L);
+	}
+
+	public void setInventoryOpen(boolean open) {
+		inventoryTmier.reset();
+		values.put("invOpen", open);
+	}
+
 	public boolean isFlooding() {
 		if (packetTimer.hasMSPassed(1000L)) {
 			packetTimer.reset();
@@ -131,6 +157,10 @@ public class User {
 
 	public Player getHandle() {
 		return handle;
+	}
+
+	public FakeBot getBot() {
+		return bot;
 	}
 
 	public Timer getAttackTimer() {

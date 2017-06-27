@@ -23,6 +23,7 @@ import me.xDark.hybridanticheat.AntiCheatSettings.CheckType;
 import me.xDark.hybridanticheat.HybridAntiCheat;
 import me.xDark.hybridanticheat.api.HybridAPI;
 import me.xDark.hybridanticheat.api.User;
+import me.xDark.hybridanticheat.bot.FakeBot;
 import me.xDark.hybridanticheat.events.ValidateEvent;
 import me.xDark.hybridanticheat.utils.MathUtil;
 
@@ -46,6 +47,11 @@ public class ProtocolHook {
 						Player p = event.getPlayer();
 						if (p.getAllowFlight() && p.isFlying())
 							return;
+						User user = HybridAPI.getUser(p);
+						if (user == null)
+							return;
+						if (user.initTime() <= 5000L)
+							return;
 						PacketContainer container = event.getPacket();
 						double x = container.getDoubles().read(0);
 						double y = container.getDoubles().read(1);
@@ -53,13 +59,10 @@ public class ProtocolHook {
 						double xDiff = MathUtil.diff(x, p.getLocation().getX());
 						double yDiff = MathUtil.diff(y, p.getLocation().getY());
 						double zDiff = MathUtil.diff(z, p.getLocation().getZ());
-						if (xDiff > 1D || yDiff > 1D || zDiff > 1D) {
-							if (teleportAttempts.get(p).incrementAndGet() == 5) {
+						if (xDiff > 6D || yDiff > 4D || zDiff > 6D) {
+							if (teleportAttempts.get(p).incrementAndGet() == 10) {
 								p.teleport(safetyLocations.get(p));
-								User user;
-								Bukkit.getPluginManager()
-										.callEvent(new ValidateEvent(user = HybridAPI.getUser(p), CheckType.Teleport));
-								HybridAPI.performActions(user, CheckType.Teleport);
+								Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.Teleport));
 							}
 						} else {
 							teleportAttempts.get(p).set(0);
@@ -73,7 +76,12 @@ public class ProtocolHook {
 					@Override
 					public void onPacketReceiving(PacketEvent e) {
 						Player p = e.getPlayer();
+						if (p == null)
+							return;
 						if (p.hasPermission("hac.bypass.books"))
+							return;
+						User user = HybridAPI.getUser(p);
+						if (user.initTime() <= 3000L)
 							return;
 						PacketContainer container = e.getPacket();
 						String channelName = container.getStrings().read(0).trim();
@@ -83,7 +91,7 @@ public class ProtocolHook {
 							else {
 								if ((System.currentTimeMillis() - channelRegisterMap.get(p)) <= 50L) {
 									e.setCancelled(true);
-									HybridAPI.performActions(HybridAPI.getUser(p), CheckType.Exploits);
+									HybridAPI.performActions(user, CheckType.Exploits);
 								} else
 									channelRegisterMap.put(p, System.currentTimeMillis());
 							}
@@ -98,6 +106,8 @@ public class ProtocolHook {
 							@Override
 							public void onPacketReceiving(PacketEvent e) {
 								Player p = e.getPlayer();
+								if (p == null)
+									return;
 								if (p.hasPermission("hac.bypass.flood"))
 									return;
 								User user = HybridAPI.getUser(p);
@@ -114,6 +124,8 @@ public class ProtocolHook {
 					@Override
 					public void onPacketReceiving(PacketEvent e) {
 						Player p = e.getPlayer();
+						if (p == null)
+							return;
 						if (p.hasPermission("hac.bypass.block"))
 							return;
 						User user = HybridAPI.getUser(p);
@@ -133,38 +145,15 @@ public class ProtocolHook {
 						}
 					}
 				});
-			if (HybridAntiCheat.instance().getSettings().isEnabled(CheckType.InvalidAction))
-				ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(HybridAntiCheat.instance(),
-						ListenerPriority.LOWEST, new PacketType[] { PacketType.Play.Client.BLOCK_PLACE }) {
-					@Override
-					public void onPacketReceiving(PacketEvent e) {
-						Player p = e.getPlayer();
-						if (p.hasPermission("hac.bypass.block"))
-							return;
-						User user = HybridAPI.getUser(p);
-						if (user == null)
-							return;
-						if (p.getItemInHand() == null || p.getItemInHand().getType() == Material.AIR)
-							return;
-						if (HybridAPI.getBlockInfront(p, 10).getType() == Material.AIR)
-							return;
-						PacketContainer container = e.getPacket();
-						BlockPosition blockPos = container.getBlockPositionModifier().read(0);
-						Location blockLocation = new Location(p.getWorld(), blockPos.getX(), blockPos.getY(),
-								blockPos.getZ());
-						if ((p.getLocation()
-								.distance(blockLocation) > (p.getGameMode() == GameMode.CREATIVE ? 7D : 5.5D))) {
-							e.setCancelled(true);
-							Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.InvalidAction));
-						}
-					}
-				});
 			if (HybridAntiCheat.instance().getSettings().isEnabled(CheckType.NoSlowDown))
 				ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(HybridAntiCheat.instance(),
 						ListenerPriority.LOWEST, new PacketType[] { PacketType.Play.Client.ENTITY_ACTION }) {
+					@SuppressWarnings("deprecation")
 					@Override
 					public void onPacketReceiving(PacketEvent e) {
 						Player p = e.getPlayer();
+						if (p == null)
+							return;
 						if (p.hasPermission("hac.bypass.block"))
 							return;
 						User user = HybridAPI.getUser(p);
@@ -172,12 +161,46 @@ public class ProtocolHook {
 							return;
 						PacketContainer container = e.getPacket();
 						PlayerAction action = container.getPlayerActions().read(0);
-						if (user.isFloodingSneak()
-								&& (action == PlayerAction.START_SNEAKING || action == PlayerAction.STOP_SNEAKING)) {
+						if (user.isFloodingSneak() && (action == PlayerAction.STOP_SNEAKING) && p.isOnGround()) {
 							e.setCancelled(true);
 							Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.NoSlowDown));
 							user.resetSneak();
 						}
+					}
+				});
+			if (HybridAntiCheat.instance().getSettings().isEnabled(CheckType.InvMove))
+				ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(HybridAntiCheat.instance(),
+						ListenerPriority.LOWEST, new PacketType[] { PacketType.Play.Client.ENTITY_ACTION }) {
+					@Override
+					public void onPacketReceiving(PacketEvent e) {
+						Player p = e.getPlayer();
+						if (p == null)
+							return;
+						if (p.hasPermission("hac.bypass.invmove"))
+							return;
+						User user = HybridAPI.getUser(p);
+						if (user == null)
+							return;
+						if (e.getPacket().getPlayerActions().read(0) == PlayerAction.OPEN_INVENTORY)
+							user.setInventoryOpen(true);
+					}
+				});
+			if (HybridAntiCheat.instance().getSettings().isEnabled(CheckType.KillAura))
+				ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(HybridAntiCheat.instance(),
+						ListenerPriority.LOWEST, new PacketType[] { PacketType.Play.Client.USE_ENTITY }) {
+					@Override
+					public void onPacketReceiving(PacketEvent e) {
+						Player p = e.getPlayer();
+						if (p == null)
+							return;
+						if (p.hasPermission("hac.bypass.killaura"))
+							return;
+						User user = HybridAPI.getUser(p);
+						if (user == null)
+							return;
+						FakeBot bot = user.getBot();
+						if (bot.getId() == e.getPacket().getIntegers().read(0))
+							bot.onAttack();
 					}
 				});
 		} catch (Exception exc) {

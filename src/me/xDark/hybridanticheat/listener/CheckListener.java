@@ -1,11 +1,12 @@
 package me.xDark.hybridanticheat.listener;
 
 import org.bukkit.Bukkit;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -43,19 +44,39 @@ public class CheckListener implements Listener {
 			CheckManager.getCheck("NoSlowDown").doCheck(user, e);
 		if (HybridAntiCheat.instance().getSettings().isEnabled(CheckType.NoFall))
 			CheckManager.getCheck("NoFall").doCheck(user, e);
+		if (HybridAntiCheat.instance().getSettings().isEnabled(CheckType.InvMove))
+			CheckManager.getCheck("InvMove").doCheck(user, e);
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onOpen(InventoryOpenEvent e) {
+		Player p = (Player) e.getPlayer();
+		if (p.hasPermission("hac.bypass.invmove"))
+			return;
+		User user = HybridAPI.getUser(p);
+		if (user == null)
+			return;
+		user.setInventoryOpen(true);
 	}
 
 	@EventHandler
-	public void onAttack(EntityDamageByEntityEvent e) {
-		if (e.getDamager().getType() != EntityType.PLAYER)
+	public void onClick(InventoryClickEvent e) {
+		Player p = (Player) e.getWhoClicked();
+		if (p.hasPermission("hac.bypass.invmove"))
 			return;
-		User user = HybridAPI.getUser(e.getDamager());
+		User user = HybridAPI.getUser(p);
 		if (user == null)
 			return;
-		if (HybridAntiCheat.instance().getSettings().isEnabled(CheckType.Criticals))
-			CheckManager.getCheck("Criticals").doCheck(user, e);
-		if (HybridAntiCheat.instance().getSettings().isEnabled(CheckType.KillAura))
-			CheckManager.getCheck("KillAura").doCheck(user, e);
+		user.setInventoryOpen(true);
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onClose(InventoryCloseEvent e) {
+		Player p = (Player) e.getPlayer();
+		User user = HybridAPI.getUser(p);
+		if (user == null)
+			return;
+		user.setInventoryOpen(false);
 	}
 
 	@EventHandler(ignoreCancelled = true)
