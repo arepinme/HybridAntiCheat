@@ -281,6 +281,7 @@ public class HybridAPI {
 				HybridAntiCheat.instance().notify(
 						"§fИгрок §6" + user.getHandle().getName() + " §fне посылает пакетов. §cFreecam§f?",
 						"hac.notify.staff");
+				performActions(user, CheckType.Freecam);
 			}
 		});
 	}
@@ -294,14 +295,18 @@ public class HybridAPI {
 			if (user.shouldUpdatePing()) {
 				user.updatePing();
 				int difference = (int) MathUtil.diff(user.getOldPing(), user.getNewPing());
-				if (difference >= 250)
+				if (difference >= 250 && user.initTime() >= 3000L) {
 					HybridAntiCheat.instance()
 							.notify("§fУ игрока §6" + user.getHandle().getName()
 									+ "§f сильно изменился пинг. Предыдущий пинг: §6 " + user.getOldPing()
 									+ "§f, нынешний пинг: §6" + user.getNewPing(), "hac.notify.staff");
-				else if ((user.getOldPing() <= 1) || (user.getNewPing() <= 1))
+					performActions(user, CheckType.Freecam);
+				} else if ((user.getOldPing() <= 1) || (user.getNewPing() <= 1) && user.initTime() >= 3000L) {
 					HybridAntiCheat.instance().notify("§fУ игрока §6" + user.getHandle().getName()
 							+ "§f не валидный пинг: §6" + user.getOldPing(), "hac.notify.staff");
+					performActions(user, CheckType.Freecam);
+
+				}
 			}
 		});
 	}
