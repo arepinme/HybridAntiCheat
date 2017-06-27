@@ -41,8 +41,9 @@ public class AntiCheatSettings {
 		List<CheckType> types = Lists.newArrayList(CheckType.values());
 		types.forEach((type) -> {
 			values.put(type, getBoolean("checks." + type.name().toLowerCase() + ".enabled"));
-			checkActions.put(type,
-					Lists.newArrayList(cfg.getString("checks." + type.name().toLowerCase() + ".action").split(" ")));
+			String actions = cfg.getString("checks." + type.name().toLowerCase() + ".action");
+			if (actions != null && !actions.trim().isEmpty())
+				checkActions.put(type, Lists.newArrayList(actions.split(" ")));
 		});
 	}
 
@@ -88,7 +89,7 @@ public class AntiCheatSettings {
 	}
 
 	public static enum CheckType {
-		Flight, HighJump, SpeedHack, Teleport, InvMove, FastLadder, KillAura, Criticals, Exploits, NoClip, InvalidAction, NoSlowDown, NoFall;
+		Flight, HighJump, SpeedHack, Teleport, InvMove, FastLadder, KillAura, Criticals, Exploits, NoClip, InvalidAction, NoSlowDown, NoFall, Freecam, PingSpoof;
 	}
 
 	public ArrayList<String> getActionsForCheck(CheckType checkType) {

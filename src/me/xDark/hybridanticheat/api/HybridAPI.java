@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
@@ -24,9 +25,11 @@ import me.xDark.hybridanticheat.bot.FakeBot;
 import me.xDark.hybridanticheat.HybridAntiCheat;
 import me.xDark.hybridanticheat.checks.impl.FlightCheck;
 import me.xDark.hybridanticheat.checks.impl.NoFallCheck;
+import me.xDark.hybridanticheat.checks.impl.NoSlowDownCheck;
 import me.xDark.hybridanticheat.events.ValidateEvent;
 import me.xDark.hybridanticheat.hook.ProtocolHook;
 import me.xDark.hybridanticheat.utils.ClassUtil;
+import me.xDark.hybridanticheat.utils.MathUtil;
 import me.xDark.hybridanticheat.utils.ReflectionUtil;
 
 public class HybridAPI {
@@ -117,6 +120,7 @@ public class HybridAPI {
 		users.put(player, new User(player));
 		FlightCheck.floatingTime.put(player, new AtomicInteger(0));
 		ProtocolHook.teleportAttempts.put(player, new AtomicInteger(0));
+		NoSlowDownCheck.attempts.put(player, new AtomicInteger(0));
 	}
 
 	public static void unregisterPlayer(Player player) {
@@ -128,6 +132,7 @@ public class HybridAPI {
 		ProtocolHook.channelRegisterMap.remove(player);
 		FlightCheck.floatingTime.remove(player);
 		ProtocolHook.teleportAttempts.remove(player);
+		NoSlowDownCheck.attempts.remove(player);
 	}
 
 	public static void performActions(User user, CheckType checkType) {
@@ -140,12 +145,14 @@ public class HybridAPI {
 		if (actionsPerformed.contains(user.getHandle().getName()))
 			return;
 		HybridAntiCheat.callSyncMethod(() -> {
-			HybridAntiCheat.instance().getSettings().getActionsForCheck(checkType).forEach((action) -> {
-				Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(),
-						HybridAntiCheat.instance().getSettings().getActions().get(action)
-								.replace("%player%", user.getHandle().getPlayer().getName())
-								.replace("%checktype%", checkType.name()));
-			});
+			ArrayList<String> actions = HybridAntiCheat.instance().getSettings().getActionsForCheck(checkType);
+			if (actions != null && !actions.isEmpty())
+				actions.forEach((action) -> {
+					Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(),
+							HybridAntiCheat.instance().getSettings().getActions().get(action)
+									.replace("%player%", user.getHandle().getPlayer().getName())
+									.replace("%checktype%", checkType.name()));
+				});
 			if (!user.getHandle().isOnline()) {
 				user.gc();
 				users.remove(user.getHandle());
@@ -238,7 +245,7 @@ public class HybridAPI {
 	}
 
 	public static void spawnRandomBots() {
-		if (users.size() == 0)
+		if (users.isEmpty())
 			return;
 		users.values().forEach((user) -> {
 			if (!user.getBot().isSpawned())
@@ -247,14 +254,54 @@ public class HybridAPI {
 	}
 
 	public static void checkBots() {
-		if (users.size() == 0)
+		if (users.isEmpty())
 			return;
 		users.values().forEach((user) -> {
 			FakeBot bot = user.getBot();
-			if (bot.isSpawned() && bot.getTicksExisted() >= 100L) {
-				if (bot.wasAttacked())
-					Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.KillAura));
-				user.getBot().destory();
+			if (bot.isSpawned()) {
+				if (bot.getTicksExisted() >= 8000L) {
+					if (bot.wasAttacked()) {
+						Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.KillAura));
+						performActions(user, CheckType.KillAura);
+					}
+					user.getBot().destory();
+				} else
+					bot.runTick();
+			}
+		});
+	}
+
+	public static void checkFrozen() {
+		if (!HybridAntiCheat.instance().getSettings().isEnabled(CheckType.Freecam))
+			return;
+		if (users.isEmpty())
+			return;
+		users.values().forEach((user) -> {
+			if (user.isFrozen()) {
+				HybridAntiCheat.instance().notify(
+						"§fИгрок §6" + user.getHandle().getName() + " §fне посылает пакетов. §cFreecam§f?",
+						"hac.notify.staff");
+			}
+		});
+	}
+
+	public static void updateAndCheckPing() {
+		if (!HybridAntiCheat.instance().getSettings().isEnabled(CheckType.PingSpoof))
+			return;
+		if (users.isEmpty())
+			return;
+		users.values().forEach((user) -> {
+			if (user.shouldUpdatePing()) {
+				user.updatePing();
+				int difference = (int) MathUtil.diff(user.getOldPing(), user.getNewPing());
+				if (difference >= 250)
+					HybridAntiCheat.instance()
+							.notify("§fУ игрока §6" + user.getHandle().getName()
+									+ "§f сильно изменился пинг. Предыдущий пинг: §6 " + user.getOldPing()
+									+ "§f, нынешний пинг: §6" + user.getNewPing(), "hac.notify.staff");
+				else if ((user.getOldPing() <= 1) || (user.getNewPing() <= 1))
+					HybridAntiCheat.instance().notify("§fУ игрока §6" + user.getHandle().getName()
+							+ "§f не валидный пинг: §6" + user.getOldPing(), "hac.notify.staff");
 			}
 		});
 	}

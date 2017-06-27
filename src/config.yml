@@ -41,6 +41,10 @@ checks:
   nofall:
     action: kick
     enabled: true
+  freecam:
+    enabled: true
+  pingspoof:
+    enabled: true
 actions:
   kick: kick %player% you have been kicked for %checktype%
   ban: ban %player% You have been banned from the server for %checktype%

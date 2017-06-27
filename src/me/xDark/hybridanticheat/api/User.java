@@ -23,7 +23,9 @@ public class User {
 	private final HashMap<String, Object> values = Maps.<String, Object>newHashMap();
 
 	private final Timer packetTimer = new Timer(), attackTimer = new Timer(), reportTimer = new Timer(),
-			sneakTimer = new Timer(), inventoryTmier = new Timer();
+			sneakTimer = new Timer(), inventoryTmier = new Timer(), pingTimer = new Timer();
+
+	private int oldPing, newPing;
 
 	private final FakeBot bot;
 
@@ -45,10 +47,13 @@ public class User {
 		values.put("sleeping", false);
 		values.put("invOpen", false);
 		reportTimer.setStartMS(System.currentTimeMillis() - HybridAntiCheat.instance().getSettings().getReportDelay());
+		oldPing = newPing = HybridAPI.getPing(handle);
 		values.put("init", System.currentTimeMillis());
 	}
 
 	public void gc() {
+		if (bot != null)
+			bot.destory();
 		values.clear();
 	}
 
@@ -83,12 +88,20 @@ public class User {
 		return ((AtomicInteger) values.get("sentPackets")).incrementAndGet();
 	}
 
+	public void resetSentPackets() {
+		((AtomicInteger) values.get("sentPackets")).set(0);
+	}
+
 	public long getLastUpdatePacket() {
 		return ((long) values.get("lastReceivedUpdatePacket"));
 	}
 
 	public void updateLastUpdatePacket() {
 		values.put("lastReceivedUpdatePacket", System.currentTimeMillis());
+	}
+
+	public boolean isFrozen() {
+		return (System.currentTimeMillis() - getLastUpdatePacket()) >= 5000L;
 	}
 
 	public int getVL() {
@@ -145,14 +158,32 @@ public class User {
 	public boolean isFlooding() {
 		if (packetTimer.hasMSPassed(1000L)) {
 			packetTimer.reset();
+			resetSentPackets();
 			return false;
 		} else {
-			if (getSentPackets() >= 400) {
-				packetTimer.reset();
-				return true;
-			}
-			return false;
+			return getSentPackets() >= 400;
 		}
+	}
+	
+	public boolean shouldUpdatePing() {
+		if (pingTimer.hasMSPassed(5000L)) {
+			pingTimer.reset();
+			return true;
+		}
+		return false;
+	}
+	
+	public void updatePing() {
+		oldPing = newPing;
+		newPing = HybridAPI.getPing(handle);
+	}
+
+	public int getOldPing() {
+		return oldPing;
+	}
+
+	public int getNewPing() {
+		return newPing;
 	}
 
 	public Player getHandle() {

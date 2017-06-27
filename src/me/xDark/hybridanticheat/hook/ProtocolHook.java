@@ -23,7 +23,6 @@ import me.xDark.hybridanticheat.AntiCheatSettings.CheckType;
 import me.xDark.hybridanticheat.HybridAntiCheat;
 import me.xDark.hybridanticheat.api.HybridAPI;
 import me.xDark.hybridanticheat.api.User;
-import me.xDark.hybridanticheat.bot.FakeBot;
 import me.xDark.hybridanticheat.events.ValidateEvent;
 import me.xDark.hybridanticheat.utils.MathUtil;
 
@@ -102,7 +101,8 @@ public class ProtocolHook {
 				ProtocolLibrary.getProtocolManager()
 						.addPacketListener(new PacketAdapter(HybridAntiCheat.instance(), ListenerPriority.LOWEST,
 								new PacketType[] { PacketType.Play.Client.POSITION,
-										PacketType.Play.Client.ARM_ANIMATION, PacketType.Play.Client.HELD_ITEM_SLOT }) {
+										PacketType.Play.Client.ARM_ANIMATION, PacketType.Play.Client.HELD_ITEM_SLOT,
+										PacketType.Play.Client.USE_ITEM }) {
 							@Override
 							public void onPacketReceiving(PacketEvent e) {
 								Player p = e.getPlayer();
@@ -185,24 +185,43 @@ public class ProtocolHook {
 							user.setInventoryOpen(true);
 					}
 				});
-			if (HybridAntiCheat.instance().getSettings().isEnabled(CheckType.KillAura))
+			if (HybridAntiCheat.instance().getSettings().isEnabled(CheckType.Freecam))
 				ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(HybridAntiCheat.instance(),
-						ListenerPriority.LOWEST, new PacketType[] { PacketType.Play.Client.USE_ENTITY }) {
+						ListenerPriority.LOWEST, new PacketType[] { PacketType.Play.Client.POSITION }) {
 					@Override
 					public void onPacketReceiving(PacketEvent e) {
 						Player p = e.getPlayer();
 						if (p == null)
 							return;
-						if (p.hasPermission("hac.bypass.killaura"))
+						if (p.hasPermission("hac.bypass.freecam"))
 							return;
 						User user = HybridAPI.getUser(p);
 						if (user == null)
 							return;
-						FakeBot bot = user.getBot();
-						if (bot.getId() == e.getPacket().getIntegers().read(0))
-							bot.onAttack();
+						user.updateLastUpdatePacket();
 					}
 				});
+			// if (HybridAntiCheat.instance().getSettings().isEnabled(CheckType.KillAura))
+			// ProtocolLibrary.getProtocolManager().addPacketListener(new
+			// PacketAdapter(HybridAntiCheat.instance(),
+			// ListenerPriority.LOWEST, new PacketType[] { PacketType.Play.Client.USE_ENTITY
+			// }) {
+			// @Override
+			// public void onPacketReceiving(PacketEvent e) {
+			// Player p = e.getPlayer();
+			// if (p == null)
+			// return;
+			// if (p.hasPermission("hac.bypass.killaura"))
+			// return;
+			// User user = HybridAPI.getUser(p);
+			// if (user == null)
+			// return;
+			// FakeBot bot = user.getBot();
+			// if (bot.getId() == e.getPacket().getIntegers().read(0))
+			// bot.onAttack();
+			// }
+			// });
+
 		} catch (Exception exc) {
 			HybridAntiCheat.instance().getLogger().log(Level.SEVERE,
 					"Error hooking in ProtocolLib. Some checks has been disabled.", exc);

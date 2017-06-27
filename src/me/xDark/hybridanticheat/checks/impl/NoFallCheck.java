@@ -25,8 +25,10 @@ public class NoFallCheck implements Check {
 	public void doCheck(User user, Event e) {
 		if (HybridAntiCheat.checkPermission(user.getHandle(), "bypass.killaura"))
 			return;
-		PlayerMoveEvent event = CastUtil.cast(e);
 		Player p = user.getHandle();
+		if (p.getAllowFlight() && p.isFlying())
+			return;
+		PlayerMoveEvent event = CastUtil.cast(e);
 		if (p.getLocation().subtract(0, 2, 0).getBlock().getType() != Material.AIR || p.isOnGround()) {
 			fallDistance.remove(p);
 			return;

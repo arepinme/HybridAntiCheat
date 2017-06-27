@@ -13,6 +13,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import me.xDark.hybridanticheat.AntiCheatSettings.CheckType;
 import me.xDark.hybridanticheat.api.HybridAPI;
 import me.xDark.hybridanticheat.checks.CheckManager;
 import me.xDark.hybridanticheat.command.ReportCommand;
@@ -28,7 +29,7 @@ public class HybridAntiCheat extends JavaPlugin {
 
 	private AntiCheatSettings settings;
 
-	private static int updateTaskId;
+	private static int updateTaskId, pingSpoofTaskId;
 
 	private static final Listener userListener = new UserListener(), validateListener = new ValidateListener(),
 			moveListener = new CheckListener();
@@ -55,15 +56,17 @@ public class HybridAntiCheat extends JavaPlugin {
 			updateTaskId = getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
 				reload(null);
 			}, 1L, 20L * 60L * 5L);
-		//getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
-		//	HybridAPI.clearVLs();
-		//}, 1L, 20L * 15L);
-		//getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
-		//	HybridAPI.spawnRandomBots();
-		//}, 1L, 20L * 60L);
-		//getServer().getScheduler().scheduleAsyncRepeatingTask(this, () -> {
-		//	HybridAPI.checkBots();
-		//}, 1L, 20L * 2L);
+		getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
+			HybridAPI.checkFrozen();
+			HybridAPI.updateAndCheckPing();
+			HybridAPI.clearVLs();
+		}, 1L, 20L * 15L);
+		// getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
+		// HybridAPI.spawnRandomBots();
+		// }, 1L, 20L * 10L);
+		// getServer().getScheduler().scheduleAsyncRepeatingTask(this, () -> {
+		// HybridAPI.checkBots();
+		// }, 1L, 20L * 2L);
 		ClassUtil.init();
 		HybridAPI.start();
 		getCommand("report").setExecutor(new ReportCommand());
@@ -84,6 +87,8 @@ public class HybridAntiCheat extends JavaPlugin {
 			ProtocolHook.hook();
 			if (!settings.isAutoUpdateEnabled())
 				getServer().getScheduler().cancelTask(updateTaskId);
+			if (!settings.isEnabled(CheckType.PingSpoof))
+				getServer().getScheduler().cancelTask(pingSpoofTaskId);
 			if (s != null)
 				s.sendMessage(getPrefix() + "§aConfiguration reloaded.");
 		} catch (Exception exc) {
