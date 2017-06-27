@@ -17,7 +17,8 @@ public class User {
 
 	private final HashMap<String, Object> values = Maps.<String, Object>newHashMap();
 
-	private final Timer packetTimer = new Timer(), attackTimer = new Timer(), reportTimer = new Timer();
+	private final Timer packetTimer = new Timer(), attackTimer = new Timer(), reportTimer = new Timer(),
+			sneakTimer = new Timer();
 
 	public User(Player handle) {
 		this.handle = handle;
@@ -93,6 +94,14 @@ public class User {
 	public void updateSafeLocation(Location safe) {
 		values.remove("safeLocation");
 		values.put("safeLocation", safe);
+	}
+
+	public boolean isFloodingSneak() {
+		return !sneakTimer.hasMSPassed(60L);
+	}
+
+	public void resetSneak() {
+		sneakTimer.reset();
 	}
 
 	public boolean hasReportTimePassed() {

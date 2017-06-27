@@ -21,6 +21,7 @@ import org.bukkit.entity.Player;
 import me.xDark.hybridanticheat.AntiCheatSettings.CheckType;
 import me.xDark.hybridanticheat.HybridAntiCheat;
 import me.xDark.hybridanticheat.checks.impl.FlightCheck;
+import me.xDark.hybridanticheat.checks.impl.NoFallCheck;
 import me.xDark.hybridanticheat.hook.ProtocolHook;
 import me.xDark.hybridanticheat.utils.ClassUtil;
 import me.xDark.hybridanticheat.utils.ReflectionUtil;
@@ -121,6 +122,7 @@ public class HybridAPI {
 		ProtocolHook.channelRegisterMap.remove(player);
 		FlightCheck.floatingTime.remove(player);
 		ProtocolHook.teleportAttempts.remove(player);
+		NoFallCheck.fallDistance.clear();
 	}
 
 	public static void performActions(User user, CheckType checkType) {

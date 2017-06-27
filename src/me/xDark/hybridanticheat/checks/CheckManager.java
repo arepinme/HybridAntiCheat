@@ -9,6 +9,8 @@ import me.xDark.hybridanticheat.checks.impl.FlightCheck;
 import me.xDark.hybridanticheat.checks.impl.HighJumpCheck;
 import me.xDark.hybridanticheat.checks.impl.KillAuraCheck;
 import me.xDark.hybridanticheat.checks.impl.NoClipCheck;
+import me.xDark.hybridanticheat.checks.impl.NoFallCheck;
+import me.xDark.hybridanticheat.checks.impl.NoSlowDownCheck;
 import me.xDark.hybridanticheat.checks.impl.SpeedHackCheck;
 
 public class CheckManager {
@@ -25,6 +27,8 @@ public class CheckManager {
 		checks.put("Criticals", new CriticalsCheck());
 		checks.put("NoClip", new NoClipCheck());
 		checks.put("BedExploit", new BedCheck());
+		checks.put("NoSlowDown", new NoSlowDownCheck());
+		checks.put("NoFall", new NoFallCheck());
 	}
 
 	public static HashMap<String, Check> getChecks() {

@@ -35,6 +35,12 @@ checks:
   exploits:
     action: kick ban
     enabled: true
+  noslowdown:
+    action: kick
+    enabled: true
+  nofall:
+    action: kick
+    enabled: true
 actions:
   kick: kick %player% you have been kicked for %checktype%
   ban: ban %player% You have been banned from the server for %checktype%

@@ -39,6 +39,10 @@ public class CheckListener implements Listener {
 			CheckManager.getCheck("NoClip").doCheck(user, e);
 		if (HybridAntiCheat.instance().getSettings().isEnabled(CheckType.InvalidAction))
 			CheckManager.getCheck("BedExploit").doCheck(user, e);
+		if (HybridAntiCheat.instance().getSettings().isEnabled(CheckType.NoSlowDown))
+			CheckManager.getCheck("NoSlowDown").doCheck(user, e);
+		if (HybridAntiCheat.instance().getSettings().isEnabled(CheckType.NoFall))
+			CheckManager.getCheck("NoFall").doCheck(user, e);
 	}
 
 	@EventHandler

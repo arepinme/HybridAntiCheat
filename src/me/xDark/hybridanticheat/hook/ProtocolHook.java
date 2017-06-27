@@ -17,6 +17,7 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.BlockPosition;
+import com.comphenix.protocol.wrappers.EnumWrappers.PlayerAction;
 
 import me.xDark.hybridanticheat.AntiCheatSettings.CheckType;
 import me.xDark.hybridanticheat.HybridAntiCheat;
@@ -155,6 +156,27 @@ public class ProtocolHook {
 								.distance(blockLocation) > (p.getGameMode() == GameMode.CREATIVE ? 7D : 5.5D))) {
 							e.setCancelled(true);
 							Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.InvalidAction));
+						}
+					}
+				});
+			if (HybridAntiCheat.instance().getSettings().isEnabled(CheckType.NoSlowDown))
+				ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(HybridAntiCheat.instance(),
+						ListenerPriority.LOWEST, new PacketType[] { PacketType.Play.Client.ENTITY_ACTION }) {
+					@Override
+					public void onPacketReceiving(PacketEvent e) {
+						Player p = e.getPlayer();
+						if (p.hasPermission("hac.bypass.block"))
+							return;
+						User user = HybridAPI.getUser(p);
+						if (user == null)
+							return;
+						PacketContainer container = e.getPacket();
+						PlayerAction action = container.getPlayerActions().read(0);
+						if (user.isFloodingSneak()
+								&& (action == PlayerAction.START_SNEAKING || action == PlayerAction.STOP_SNEAKING)) {
+							e.setCancelled(true);
+							Bukkit.getPluginManager().callEvent(new ValidateEvent(user, CheckType.NoSlowDown));
+							user.resetSneak();
 						}
 					}
 				});
